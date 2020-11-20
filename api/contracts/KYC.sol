@@ -27,7 +27,7 @@ contract KYC {
         return (signature, publicKey, timestamp);
     }
 
-    function newCustomer(bytes32 id, bytes32 signature, bytes32 publicKey, bytes16 timestamp) public payable returns(bool) {
+    function addCustomer(bytes32 id, bytes32 signature, bytes32 publicKey, bytes16 timestamp) public payable returns(bool) {
         emit LogNewCustomer(id);
         customers[id] = Customer({signature: signature, publicKey: publicKey, timestamp: timestamp});
         customerCount = customerCount + 1;
