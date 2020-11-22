@@ -105,20 +105,22 @@ class NewCustomer extends Component {
 
         const jsEncrypt = new JSEncrypt();
 
+        // Only need to set private key (private key contains public key parameters)
         jsEncrypt.setPrivateKey(this.privateKey);
+
         // Hash the data with SHA256 then encrypt it using RSA to create signature.
         const signature = jsEncrypt.sign(customerData, CryptoJS.SHA256, "sha256");
         console.log(signature);
 
-        jsEncrypt.setPublicKey(this.publicKey);        
-        const encrypted = jsEncrypt.encrypt(customerData);
-        console.log(encrypted);
-
-        jsEncrypt.setPublicKey(this.publicKey);
+        // Verify the customer data with the signature
         const verified = jsEncrypt.verify(customerData, signature, CryptoJS.SHA256);
         console.log(verified);
 
-        jsEncrypt.setPrivateKey(this.privateKey);
+        // Encrypt the data without hashing (so that it can be stored by the user and decrypted later)       
+        const encrypted = jsEncrypt.encrypt(JSON.stringify(customerData));
+        console.log(encrypted);
+
+        // Decrypt the data
         const decrypted = jsEncrypt.decrypt(encrypted);
         console.log(decrypted);
     }
