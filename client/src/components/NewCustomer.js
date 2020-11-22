@@ -3,8 +3,9 @@ import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import CryptoJS from 'crypto-js';
 import JSEncrypt from 'jsencrypt';
+import { v4 as uuidv4 } from 'uuid';
 
-class NewCustomer extends Component {    
+class NewCustomer extends Component {
     constructor(props) {
         super(props);
 
@@ -12,13 +13,13 @@ class NewCustomer extends Component {
             givenNames: '',
             familyName: '',
             city: '',
-            isPep: false
+            isPep: false,
+            showKey: false
         }
     }
 
     // Mock the keys (would have to retrieve from backend in real life)
-    privateKey = `-----BEGIN RSA PRIVATE KEY-----
-    MIICXgIBAAKBgQDBPpTDpu+MRRfnjf7XbbQoqNzeYFnmftecJnDuhhg76RsBG8R+
+    privateKey = `MIICXgIBAAKBgQDBPpTDpu+MRRfnjf7XbbQoqNzeYFnmftecJnDuhhg76RsBG8R+
     ztZYU25ot5qyf5mSCbWgFdEq/GM36qX//Sbz+SaLTBhhUpfY5iMx94s4qfI8oy/8
     oN51wB8xCFw7U5RHeEY+8u62bDIyzlf3DBOlabRtRJzaBCbVU2JjHait/wIDAQAB
     AoGBALeVsZTSYh9bgKM+Fg4prY83JWWqGZ5NgJ5bMsyX3iwEf+Akth9WdvHAiVK4
@@ -30,8 +31,7 @@ class NewCustomer extends Component {
     FlTo/uBIVBO9ABZ8LkwNldtFTbu/eqrnegpX2sHu7pQ/R97B6WYsHMf1o0qBAkBp
     WikjlA6xdEHUtgww8KvmzFW5RVyayEVg6iSe8tqZlVC9E+VK6Oqbgd01TpCxhc6u
     YPbN/Q/MtJpcsf89lVX1AkEAi1R3WEjYho5rPs8MAYztqkgSQecgLfowqdS/cjwQ
-    Rmt6sIIil5WEBBmQpKPYqsbaTr8wS15Vg8qqiQhJXUo+Uw==
-    -----END RSA PRIVATE KEY-----`;
+    Rmt6sIIil5WEBBmQpKPYqsbaTr8wS15Vg8qqiQhJXUo+Uw==`;
 
     publicKey = `-----BEGIN PUBLIC KEY-----
     MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDBPpTDpu+MRRfnjf7XbbQoqNze
@@ -46,8 +46,8 @@ class NewCustomer extends Component {
                 <Form onSubmit={this.handleSubmit}>
                     <Form.Group controlId="formGivenNames">
                         <Form.Label>Given Name(s)</Form.Label>
-                        <Form.Control 
-                            type="text" 
+                        <Form.Control
+                            type="text"
                             placeholder="Enter given name(s)"
                             name="givenNames"
                             onChange={this.handleChange} />
@@ -55,8 +55,8 @@ class NewCustomer extends Component {
 
                     <Form.Group controlId="formFamilyName">
                         <Form.Label>Family Name</Form.Label>
-                        <Form.Control 
-                            type="text" 
+                        <Form.Control
+                            type="text"
                             placeholder="Enter family name"
                             name="familyName"
                             onChange={this.handleChange} />
@@ -64,65 +64,74 @@ class NewCustomer extends Component {
 
                     <Form.Group controlId="formCity">
                         <Form.Label>City</Form.Label>
-                        <Form.Control 
-                            type="text" 
-                            placeholder="Enter city"                            
+                        <Form.Control
+                            type="text"
+                            placeholder="Enter city"
                             name="city"
                             onChange={this.handleChange} />
                     </Form.Group>
 
                     <Form.Group controlId="formIsPep">
-                        <Form.Check 
-                            type="checkbox" 
+                        <Form.Check
+                            type="checkbox"
                             label="Are you a PEP?"
                             name="isPep"
                             onChange={this.handleChange} />
                     </Form.Group>
-                    
+
                     <Button variant="primary" type="submit">
                         Submit
                     </Button>
+
+                    {this.state.showKey &&
+                        <div>
+                            <p className="pt-3">
+                                Your data has been verified! Record your private key so you can skip verification in future.
+                            </p>
+                            <p className="pt-3">
+                                Your private key is: {this.privateKey}
+                            </p>
+                        </div>
+                    }
+
                 </Form>
             </div>
         )
     }
 
     handleChange = (event) => {
-        this.setState({ [event.target.name]: event.target.type === "checkbox" ? event.target.checked: event.target.value });
+        this.setState({ [event.target.name]: event.target.type === "checkbox" ? event.target.checked : event.target.value });
     };
 
     handleSubmit = (event) => {
         // Prevent HTML form submit.
         event.preventDefault();
-        
-        const customerData = {
+
+        this.setState({ showKey: true });
+
+        // Generated signature from customer data and encrypted customer data
+        let customerData = {
             givenNames: this.state.givenNames,
             familyName: this.state.familyName,
             city: this.state.city,
             isPep: this.state.isPep
         }
-        const timestamp = Date.now();
-
+        customerData = JSON.stringify(customerData);
         const jsEncrypt = new JSEncrypt();
-
         // Only need to set private key (private key contains public key parameters)
         jsEncrypt.setPrivateKey(this.privateKey);
-
         // Hash the data with SHA256 then encrypt it using RSA to create signature.
         const signature = jsEncrypt.sign(customerData, CryptoJS.SHA256, "sha256");
-        console.log(signature);
-
-        // Verify the customer data with the signature
-        const verified = jsEncrypt.verify(customerData, signature, CryptoJS.SHA256);
-        console.log(verified);
-
         // Encrypt the data without hashing (so that it can be stored by the user and decrypted later)       
-        const encrypted = jsEncrypt.encrypt(JSON.stringify(customerData));
-        console.log(encrypted);
+        const encrypted = jsEncrypt.encrypt(customerData);
+        
+        // Generate timestamp and userID to store alongside signature in blockchain
+        const timestamp = Date.now();
+        const userId = uuidv4();
 
-        // Decrypt the data
-        const decrypted = jsEncrypt.decrypt(encrypted);
-        console.log(decrypted);
+        console.log(encrypted);
+        console.log(userId);
+        console.log(timestamp);
     }
 }
 
