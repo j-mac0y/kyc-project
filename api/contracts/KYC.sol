@@ -5,29 +5,29 @@ contract KYC {
     uint public customerCount;
 
     // Store customers by unique ID
-    mapping (bytes32 => Customer) private customers;
+    mapping (string => Customer) private customers;
 
     struct Customer {
-        bytes32 signature;
-        bytes32 publicKey;
-        bytes16 timestamp;
+        string signature;
+        string publicKey;
+        string timestamp;
     }
 
-    event LogNewCustomer(bytes32 id);
+    event LogNewCustomer(string id);
 
     constructor() public {
         owner = msg.sender;
         customerCount = 0;
     }
 
-    function getCustomer(bytes32 id) public view returns (bytes32 signature, bytes32 publicKey, bytes16 timestamp) {
+    function getCustomer(string memory id) public view returns (string memory signature, string memory publicKey, string memory timestamp) {
         signature = customers[id].signature;
         publicKey = customers[id].publicKey;
         timestamp = customers[id].timestamp;
         return (signature, publicKey, timestamp);
     }
 
-    function addCustomer(bytes32 id, bytes32 signature, bytes32 publicKey, bytes16 timestamp) public payable returns(bool) {
+    function addCustomer(string memory id, string memory signature, string memory publicKey, string memory timestamp) public returns(bool) {
         emit LogNewCustomer(id);
         customers[id] = Customer({signature: signature, publicKey: publicKey, timestamp: timestamp});
         customerCount = customerCount + 1;
