@@ -1,9 +1,7 @@
 import React, { Component } from "react";
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
-import CryptoJS from 'crypto-js';
-import JSEncrypt from 'jsencrypt';
-import { v4 as uuidv4 } from 'uuid';
+import getWeb3 from '../utils/getWeb3';
 
 class NewCustomer extends Component {
     constructor(props) {
@@ -14,31 +12,40 @@ class NewCustomer extends Component {
             familyName: '',
             city: '',
             isPep: false,
-            showKey: false
+            showKey: false,
+            web3: null,
+            accounts: null
         }
     }
 
-    // Mock the keys (would have to retrieve from backend in real life)
-    privateKey = `MIICXgIBAAKBgQDBPpTDpu+MRRfnjf7XbbQoqNzeYFnmftecJnDuhhg76RsBG8R+
-    ztZYU25ot5qyf5mSCbWgFdEq/GM36qX//Sbz+SaLTBhhUpfY5iMx94s4qfI8oy/8
-    oN51wB8xCFw7U5RHeEY+8u62bDIyzlf3DBOlabRtRJzaBCbVU2JjHait/wIDAQAB
-    AoGBALeVsZTSYh9bgKM+Fg4prY83JWWqGZ5NgJ5bMsyX3iwEf+Akth9WdvHAiVK4
-    oyHS8V15FfB46Zcx4Ty9EmlI4hgZ1jn29cwPvshY93vocSa/7agLG3vTtEKPb++1
-    eGkyWtLuJ+w017NZjptyYzNrNvGoDNDgnuTBGLmIxohwOSq5AkEA/MvCNdr8atgw
-    1vFMsWiUqdxZ5EeQvh0Lma95WNmIf1f+zLG08+lJI8kGR+n513yIxoQI5h8hjamr
-    6IOM8S7QPQJBAMOxmN0jHsLa1JpJdupl/nU6EJzsHj5KVG/36eRlIN8/IMUo7PAC
-    el2EOIgH0mBCaCMOvOexKBvHOUIEHu+P/usCQQChU+e9NuOfzBhfE9892OAHBvjX
-    FlTo/uBIVBO9ABZ8LkwNldtFTbu/eqrnegpX2sHu7pQ/R97B6WYsHMf1o0qBAkBp
-    WikjlA6xdEHUtgww8KvmzFW5RVyayEVg6iSe8tqZlVC9E+VK6Oqbgd01TpCxhc6u
-    YPbN/Q/MtJpcsf89lVX1AkEAi1R3WEjYho5rPs8MAYztqkgSQecgLfowqdS/cjwQ
-    Rmt6sIIil5WEBBmQpKPYqsbaTr8wS15Vg8qqiQhJXUo+Uw==`;
-
-    publicKey = `-----BEGIN PUBLIC KEY-----
-    MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDBPpTDpu+MRRfnjf7XbbQoqNze
-    YFnmftecJnDuhhg76RsBG8R+ztZYU25ot5qyf5mSCbWgFdEq/GM36qX//Sbz+SaL
-    TBhhUpfY5iMx94s4qfI8oy/8oN51wB8xCFw7U5RHeEY+8u62bDIyzlf3DBOlabRt
-    RJzaBCbVU2JjHait/wIDAQAB
-    -----END PUBLIC KEY-----`;
+    componentDidMount = async () => {
+        try {
+            // Get network provider and web3 instance.
+            const web3 = await getWeb3();
+      
+            // Use web3 to get the user's accounts.
+            const accounts = await web3.eth.getAccounts();
+      
+            // Get the contract instance.
+            const networkId = await web3.eth.net.getId();
+            // const deployedNetwork = SimpleStorageContract.networks[networkId];
+            // const instance = new web3.eth.Contract(
+            //   SimpleStorageContract.abi,
+            //   deployedNetwork && deployedNetwork.address,
+            // );
+      
+            // // Set web3, accounts, and contract to the state, and then proceed with an
+            // // example of interacting with the contract's methods.
+            // this.setState({ web3, accounts, contract: instance }, this.runExample);
+            this.setState({ web3, accounts});
+        } catch (error) {
+            // Catch any errors for any of the above operations.
+            alert(
+              `Failed to load web3, accounts, or contract. Check console for details.`,
+            );
+            console.error(error);
+          }
+    }
 
     render() {
         return (
@@ -103,7 +110,7 @@ class NewCustomer extends Component {
         this.setState({ [event.target.name]: event.target.type === "checkbox" ? event.target.checked : event.target.value });
     };
 
-    handleSubmit = (event) => {
+    handleSubmit = async (event) => {
         // Prevent HTML form submit.
         event.preventDefault();
 
@@ -117,21 +124,17 @@ class NewCustomer extends Component {
             isPep: this.state.isPep
         }
         customerData = JSON.stringify(customerData);
-        const jsEncrypt = new JSEncrypt();
-        // Only need to set private key (private key contains public key parameters)
-        jsEncrypt.setPrivateKey(this.privateKey);
-        // Hash the data with SHA256 then encrypt it using RSA to create signature.
-        const signature = jsEncrypt.sign(customerData, CryptoJS.SHA256, "sha256");
-        // Encrypt the data without hashing (so that it can be stored by the user and decrypted later)       
-        const encrypted = jsEncrypt.encrypt(customerData);
         
         // Generate timestamp and userID to store alongside signature in blockchain
         const timestamp = Date.now();
-        const userId = uuidv4();
 
-        console.log(encrypted);
-        console.log(userId);
-        console.log(timestamp);
+        console.log(this.state.accounts);
+        console.log(this.state.web3.eth.defaultAccount);
+        const dataHash = this.state.web3.utils.sha3('Apples');
+        const signature = await this.state.web3.eth.personal.sign(dataHash, this.state.web3.eth.defaultAccount());
+
+        console.log(dataHash);
+
     }
 }
 
