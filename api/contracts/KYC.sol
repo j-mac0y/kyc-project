@@ -1,35 +1,54 @@
 pragma solidity >=0.4.22 <0.8.0;
 
 contract KYC {
+    
     address public owner;
     uint public customerCount;
 
-    // Store customers by unique ID
-    mapping (string => Customer) private customers;
+    // Store customers in a mapping
+    mapping (address => Customer) private customers;
+
+    address[] private verifiers;
 
     struct Customer {
-        string signature;
-        string publicKey;
-        string timestamp;
+        bytes signature;
+        address verifiedBy;
+        string verifiedAt;
+        string documentProvided;
+        bool exists;
     }
 
-    event LogNewCustomer(string id);
+    event LogNewCustomer(address customerAddr);
+
+    modifier isOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    modifier isNotCustomer(address customerAddr) {
+        require(!customers[customerAddr].exists);
+        _;
+    }
 
     constructor() public {
+        // Set the account that instantiated the contract as the owner
         owner = msg.sender;
         customerCount = 0;
     }
 
-    function getCustomer(string memory id) public view returns (string memory signature, string memory publicKey, string memory timestamp) {
-        signature = customers[id].signature;
-        publicKey = customers[id].publicKey;
-        timestamp = customers[id].timestamp;
-        return (signature, publicKey, timestamp);
+    function getCustomer(address customerAddr) public view returns (bytes memory signature, address verifiedBy, string memory verifiedAt, string memory documentProvided, bool exists) {
+        signature = customers[customerAddr].signature;
+        verifiedBy = customers[customerAddr].verifiedBy;
+        verifiedAt = customers[customerAddr].verifiedAt;
+        documentProvided = customers[customerAddr].documentProvided;
+        exists = customers[customerAddr].exists;
+        return (signature, verifiedBy, verifiedAt, documentProvided, exists);
     }
 
-    function addCustomer(string memory id, string memory signature, string memory publicKey, string memory timestamp) public returns(bool) {
-        emit LogNewCustomer(id);
-        customers[id] = Customer({signature: signature, publicKey: publicKey, timestamp: timestamp});
+    function addCustomer(address customerAddr, bytes memory signature, address verifiedBy, string memory verifiedAt, string memory documentProvided) 
+    public isOwner() isNotCustomer(customerAddr) returns(bool) {
+        emit LogNewCustomer(customerAddr);
+        customers[customerAddr] = Customer({signature: signature, verifiedBy: verifiedBy, verifiedAt: verifiedAt, documentProvided: documentProvided, exists: true});
         customerCount = customerCount + 1;
         return true;
     }

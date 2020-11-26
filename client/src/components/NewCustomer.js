@@ -22,10 +22,10 @@ class NewCustomer extends Component {
         try {
             // Get network provider and web3 instance.
             const web3 = await getWeb3();
-      
+
             // Use web3 to get the user's accounts.
             const accounts = await web3.eth.getAccounts();
-      
+
             // Get the contract instance.
             const networkId = await web3.eth.net.getId();
             // const deployedNetwork = SimpleStorageContract.networks[networkId];
@@ -33,18 +33,18 @@ class NewCustomer extends Component {
             //   SimpleStorageContract.abi,
             //   deployedNetwork && deployedNetwork.address,
             // );
-      
+
             // // Set web3, accounts, and contract to the state, and then proceed with an
             // // example of interacting with the contract's methods.
             // this.setState({ web3, accounts, contract: instance }, this.runExample);
-            this.setState({ web3, accounts});
+            this.setState({ web3, accounts });
         } catch (error) {
             // Catch any errors for any of the above operations.
             alert(
-              `Failed to load web3, accounts, or contract. Check console for details.`,
+                `Failed to load web3, accounts, or contract. Check console for details.`,
             );
             console.error(error);
-          }
+        }
     }
 
     render() {
@@ -89,14 +89,17 @@ class NewCustomer extends Component {
                     <Button variant="primary" type="submit">
                         Submit
                     </Button>
+                    <Form.Text className="text-muted">
+                        Note: this prototype assumes that user also uploads an identification document (e.g. drivers license) for verification
+                    </Form.Text>
 
                     {this.state.showKey &&
                         <div>
                             <p className="pt-3">
-                                Your data has been verified! Record your private key so you can skip verification in future.
+                                The data you provided has been verified alongside your documentation!
                             </p>
                             <p className="pt-3">
-                                Your private key is: {this.privateKey}
+                                The Ethereum account you used to sign your data can now be used to prove your identity to other organisations.
                             </p>
                         </div>
                     }
@@ -121,19 +124,19 @@ class NewCustomer extends Component {
             givenNames: this.state.givenNames,
             familyName: this.state.familyName,
             city: this.state.city,
-            isPep: this.state.isPep
+            isPep: this.state.isPep,
         }
         customerData = JSON.stringify(customerData);
-        
-        // Generate timestamp and userID to store alongside signature in blockchain
+
+        const dataHash = this.state.web3.utils.sha3(customerData);
+        const signature = await this.state.web3.eth.personal.sign(dataHash, this.state.accounts[0]);
+
+        // Generate timestamp to be used as a nonce
         const timestamp = Date.now();
 
-        console.log(this.state.accounts);
-        console.log(this.state.web3.eth.defaultAccount);
-        const dataHash = this.state.web3.utils.sha3('Apples');
-        const signature = await this.state.web3.eth.personal.sign(dataHash, this.state.web3.eth.defaultAccount());
-
+        console.log(timestamp);
         console.log(dataHash);
+        console.log(signature);
 
     }
 }
