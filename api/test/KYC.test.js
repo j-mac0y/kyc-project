@@ -36,10 +36,6 @@ contract('KYC', function(accounts) {
         assert.equal(tx.logs[0].event, "LogNewCustomer", 'should emit an event when a new Customer is added');
     })
 
-    it("should not allow invalid or empty data", async() => {
-        
-    })
-
     it("should not allow two accounts to verify using the same data", async() => {
         const signature = "0x9513dde33c2c331434f13a219314605ada5ad15b618770fc789c8d32d2f502de4434cf9ae6e976025246bec6084284ddbbc097f3b73a7b1f846e30d9eddbe7a51c";
         const verifiedBy = jamesBank;

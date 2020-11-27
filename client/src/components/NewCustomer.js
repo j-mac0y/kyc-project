@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
 import getWeb3 from '../utils/getWeb3';
+import KYCContract from "../contracts/KYC";
 
 class NewCustomer extends Component {
     constructor(props) {
@@ -12,9 +13,10 @@ class NewCustomer extends Component {
             familyName: '',
             city: '',
             isPep: false,
-            showKey: false,
             web3: null,
-            accounts: null
+            accounts: null,
+            contract: null,
+            blockchainValue: null
         }
     }
 
@@ -28,16 +30,14 @@ class NewCustomer extends Component {
 
             // Get the contract instance.
             const networkId = await web3.eth.net.getId();
-            // const deployedNetwork = SimpleStorageContract.networks[networkId];
-            // const instance = new web3.eth.Contract(
-            //   SimpleStorageContract.abi,
-            //   deployedNetwork && deployedNetwork.address,
-            // );
+            const deployedNetwork = KYCContract.networks[networkId];
+            const kyc = new web3.eth.Contract(
+                KYCContract.abi,
+                deployedNetwork && deployedNetwork.address,
+            );
 
-            // // Set web3, accounts, and contract to the state, and then proceed with an
-            // // example of interacting with the contract's methods.
-            // this.setState({ web3, accounts, contract: instance }, this.runExample);
-            this.setState({ web3, accounts });
+            // Set web3, accounts, and contract to the state
+            this.setState({ web3, accounts, contract: kyc });
         } catch (error) {
             // Catch any errors for any of the above operations.
             alert(
@@ -48,6 +48,9 @@ class NewCustomer extends Component {
     }
 
     render() {
+        if (!this.state.web3) {
+            return <div>Loading Web3, accounts, and contract...</div>;
+        }
         return (
             <div className="container">
                 <Form onSubmit={this.handleSubmit}>
@@ -93,10 +96,14 @@ class NewCustomer extends Component {
                         Note: this prototype assumes that user also uploads an identification document (e.g. drivers license) for verification
                     </Form.Text>
 
-                    {this.state.showKey &&
+                    {this.state.blockchainValue &&
                         <div>
                             <p className="pt-3">
                                 The data you provided has been verified alongside your documentation!
+                            </p>
+                            <p className="pt-3">
+                                The following data has been stored in the blockchain:
+                                {this.state.blockchainValue}
                             </p>
                             <p className="pt-3">
                                 The Ethereum account you used to sign your data can now be used to prove your identity to other organisations.
@@ -117,8 +124,6 @@ class NewCustomer extends Component {
         // Prevent HTML form submit.
         event.preventDefault();
 
-        this.setState({ showKey: true });
-
         // Generated signature from customer data and encrypted customer data
         let customerData = {
             givenNames: this.state.givenNames,
@@ -134,10 +139,16 @@ class NewCustomer extends Component {
         // Generate timestamp to be used as a nonce
         const timestamp = Date.now();
 
-        console.log(timestamp);
-        console.log(dataHash);
-        console.log(signature);
+        // Add customer using Alice account
+        const jamesBank = this.state.accounts[0];
+        const alice = this.state.accounts[1];
+        console.log(this.state.accounts);
+        console.log(jamesBank);
+        console.log(alice);
+        await this.state.contract.methods.addCustomer(alice, signature, jamesBank, timestamp, "Australian Drivers License").send({ from: jamesBank });
 
+        const response = await this.state.contract.methods.getCustomer(alice, { from: jamesBank });
+        this.setState({ blockchainValue: response });
     }
 }
 
