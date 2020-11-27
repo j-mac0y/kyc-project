@@ -139,15 +139,12 @@ class NewCustomer extends Component {
         // Generate timestamp to be used as a nonce
         const timestamp = Date.now();
 
-        // Add customer using Alice account
-        const jamesBank = this.state.accounts[0];
-        const alice = this.state.accounts[1];
-        console.log(this.state.accounts);
-        console.log(jamesBank);
-        console.log(alice);
-        await this.state.contract.methods.addCustomer(alice, signature, jamesBank, timestamp, "Australian Drivers License").send({ from: jamesBank });
+        // Add customer
+        const customerAcc = this.state.accounts[0];
+        // In reality, this request would need to come from a back end with access to a Ethereum account that is a "verifier". To avoid needing a backend for this prototype, the customer is able to add themselves to the list.
+        await this.state.contract.methods.addCustomer(customerAcc, signature, customerAcc, timestamp, "Australian Drivers License").send({ from: customerAcc });
 
-        const response = await this.state.contract.methods.getCustomer(alice, { from: jamesBank });
+        const response = await this.state.contract.methods.getCustomer(customerAcc).call({from: customerAcc});
         this.setState({ blockchainValue: response });
     }
 }

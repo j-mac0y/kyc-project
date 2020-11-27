@@ -1,9 +1,10 @@
 pragma solidity >=0.4.22 <0.8.0;
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract KYC {
+contract KYC is Ownable {
     
-    address public owner;
     uint public customerCount;
+    bool public stopped;
 
     // Store customers in a mapping
     mapping (address => Customer) private customers;
@@ -19,24 +20,27 @@ contract KYC {
     }
 
     event LogNewCustomer(address customerAddr);
-
-    modifier isOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-
+    event LogContractStopped();
+    
     modifier isNotCustomer(address customerAddr) {
         require(!customers[customerAddr].exists);
         _;
     }
 
-    constructor() public {
-        // Set the account that instantiated the contract as the owner
-        owner = msg.sender;
-        customerCount = 0;
+    // Implement circuit breaker pattern
+    modifier isNotStopped() {
+        require(!stopped);
+        _;
     }
 
-    function getCustomer(address customerAddr) public view returns (bytes memory signature, address verifiedBy, string memory verifiedAt, string memory documentProvided, bool exists) {
+    constructor() public {
+        // Set the account that instantiated the contract as the owner
+        customerCount = 0;
+        stopped = false;
+    }
+
+    function getCustomer(address customerAddr) 
+    public view isNotStopped() returns (bytes memory signature, address verifiedBy, string memory verifiedAt, string memory documentProvided, bool exists) {
         signature = customers[customerAddr].signature;
         verifiedBy = customers[customerAddr].verifiedBy;
         verifiedAt = customers[customerAddr].verifiedAt;
@@ -46,11 +50,26 @@ contract KYC {
     }
 
     function addCustomer(address customerAddr, bytes memory signature, address verifiedBy, string memory verifiedAt, string memory documentProvided) 
-    public isOwner() isNotCustomer(customerAddr) returns(bool) {
+    public isNotStopped() isNotCustomer(customerAddr) returns(bool) {
         emit LogNewCustomer(customerAddr);
         customers[customerAddr] = Customer({signature: signature, verifiedBy: verifiedBy, verifiedAt: verifiedAt, documentProvided: documentProvided, exists: true});
         customerCount = customerCount + 1;
         return true;
+    }
+
+    // Implement circuit breaker design pattern
+    function stopContract()
+    public onlyOwner() returns(bool) {
+        emit LogContractStopped();
+        stopped = true;
+        return true;
+    }
+
+    // Implement mortal design pattern
+    function kill()
+    public onlyOwner()
+    {
+           selfdestruct(address(uint160(owner()))); // cast owner to address payable
     }
 
 }

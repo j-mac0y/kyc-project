@@ -24,6 +24,7 @@ contract('KYC', function(accounts) {
         assert.equal(result[1], verifiedBy, 'The verifiedBy of the customer does not match the stored value');
         assert.equal(result[2], verifiedAt, 'The verifiedAt of the customer does not match the stored value');
         assert.equal(result[3], documentProvided, 'The documentProvided of the customer does not match the stored value');
+        assert.equal(result[4], true, 'The exists value of the customer does not match the stored value');
     })
 
     it("should log an event when a new Customer is added", async() => {
@@ -36,18 +37,9 @@ contract('KYC', function(accounts) {
         assert.equal(tx.logs[0].event, "LogNewCustomer", 'should emit an event when a new Customer is added');
     })
 
-    it("should not allow two accounts to verify using the same data", async() => {
-        const signature = "0x9513dde33c2c331434f13a219314605ada5ad15b618770fc789c8d32d2f502de4434cf9ae6e976025246bec6084284ddbbc097f3b73a7b1f846e30d9eddbe7a51c";
-        const verifiedBy = jamesBank;
-        const verifiedAt = "1606086072714";
-        const documentProvided = "Australian Drivers License";
-        await kyc.addCustomer(alice, signature, verifiedBy, verifiedAt, documentProvided, {from: jamesBank});
-        await catchRevert(kyc.addCustomer(bob, signature, verifiedBy, verifiedAt, documentProvided, {from: jamesBank}));
-    })
-
     it("should not allow the same account to verify twice", async() => {
-        let verifiedBy = jamesBank;
         let signature = "0x9513dde33c2c331434f13a219314605ada5ad15b618770fc789c8d32d2f502de4434cf9ae6e976025246bec6084284ddbbc097f3b73a7b1f846e30d9eddbe7a51c";
+        let verifiedBy = jamesBank;
         let verifiedAt = "1606086072714";
         let documentProvided = "Australian Drivers License";
         await kyc.addCustomer(alice, signature, verifiedBy, verifiedAt, documentProvided, {from: jamesBank});
@@ -60,13 +52,21 @@ contract('KYC', function(accounts) {
         await catchRevert(kyc.addCustomer(alice, signature, verifiedBy, verifiedAt, documentProvided, {from: jamesBank}));
     })
 
-    it("should only allow the owner to verify (add) customers", async() => {
-        const signature = "0x9513dde33c2c331434f13a219314605ada5ad15b618770fc789c8d32d2f502de4434cf9ae6e976025246bec6084284ddbbc097f3b73a7b1f846e30d9eddbe7a51c";
-        const verifiedBy = jamesBank;
-        const verifiedAt = "1606086072714";
-        const documentProvided = "Australian Drivers License";
-        
-        // Attempt to add a customer as Alice, who is not the owner, so it should revert
-        await catchRevert(kyc.addCustomer(alice, signature, verifiedBy, verifiedAt, documentProvided, {from: alice}));
+    it("should not run if stopped", async() => {
+        let signature = "0x9513dde33c2c331434f13a219314605ada5ad15b618770fc789c8d32d2f502de4434cf9ae6e976025246bec6084284ddbbc097f3b73a7b1f846e30d9eddbe7a51c";
+        let verifiedBy = jamesBank;
+        let verifiedAt = "1606086072714";
+        let documentProvided = "Australian Drivers License";
+        await kyc.addCustomer(alice, signature, verifiedBy, verifiedAt, documentProvided, {from: jamesBank});
+
+        // Stop the contract and test that the functions are no longer callable
+        await kyc.stopContract({from: jamesBank});
+        await catchRevert(kyc.getCustomer(alice, {from: jamesBank}));
+        await catchRevert(kyc.addCustomer(bob, signature, verifiedBy, verifiedAt, documentProvided, {from: jamesBank}));
+    })
+
+    it("should only allow an owner to stop or kill the contract", async() => {
+        await catchRevert(kyc.stopContract({from: alice}));
+        await catchRevert(kyc.kill({from: alice}));
     })
 })
