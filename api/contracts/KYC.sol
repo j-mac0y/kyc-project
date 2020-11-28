@@ -9,8 +9,6 @@ contract KYC is Ownable {
     // Store customers in a mapping
     mapping (address => Customer) private customers;
 
-    address[] private verifiers;
-
     struct Customer {
         bytes signature;
         address verifiedBy;
