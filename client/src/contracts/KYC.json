@@ -6582,6 +6582,64 @@
     "version": "0.6.0+commit.26b70077.Emscripten.clang"
   },
   "networks": {
+    "4": {
+      "events": {
+        "0xa579b3d5eb976f2948dd17affc7f72ef2b90c67dfc7b798f9ab7778ea42c8d91": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "customerAddr",
+              "type": "address"
+            }
+          ],
+          "name": "LogAddCustomer",
+          "type": "event"
+        },
+        "0x70e75640da2cc45d653f6c9073865d0a6370a890bcd47cb891e4638a71f754e0": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "customerAddr",
+              "type": "address"
+            }
+          ],
+          "name": "LogClearCustomer",
+          "type": "event"
+        },
+        "0x271eeaa027ef2b0ef7f9c88ade99794e43f75016f0320df12ea62b72a74e2686": {
+          "anonymous": false,
+          "inputs": [],
+          "name": "LogContractStopped",
+          "type": "event"
+        },
+        "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0": {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousOwner",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "name": "OwnershipTransferred",
+          "type": "event"
+        }
+      },
+      "links": {},
+      "address": "0x9cBd2013df608b4541BE07b7F681ff00Dd2a47A9",
+      "transactionHash": "0x68f7a5f110f220c63a8c8d6eda3612a129c8a1d2906e2cdc7a1231ed3eab7cde"
+    },
     "1606434605813": {
       "events": {
         "0x4616fba1cf00e95b2ebbbb59f1244eb9ccc9af546cdc19a5e82465a17c878a86": {
@@ -6765,7 +6823,7 @@
     }
   },
   "schemaVersion": "3.3.2",
-  "updatedAt": "2020-11-29T23:57:03.362Z",
+  "updatedAt": "2020-11-30T03:54:33.507Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {

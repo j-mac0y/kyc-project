@@ -5,6 +5,7 @@ import AccountInfo from './components/AccountInfo';
 import ProcessInfo from './components/ProcessInfo';
 import getWeb3 from './utils/getWeb3';
 import KYCContract from "./contracts/KYC";
+import Spinner from 'react-bootstrap/Spinner';
 
 class App extends Component {
   constructor(props) {
@@ -15,12 +16,14 @@ class App extends Component {
       accounts: null,
       contract: null,
       customer: null,
-      isVerified: null
+      isVerified: null,
+      transactionLoading: false
     };
 
     this.clearCustomer = this.clearCustomer.bind(this);
     this.getCustomer = this.getCustomer.bind(this);
     this.verifyExistingCustomer = this.verifyExistingCustomer.bind(this);
+    this.newCustomer = this.newCustomer.bind(this);
   }
 
   componentDidMount = async () => {
@@ -59,7 +62,12 @@ class App extends Component {
       <div>
         <div>
           <header className="app-header">
-            <h1>Know Your Customer Prototype</h1>
+            <div className="d-inline-flex">
+              <h1>Know Your Customer Prototype</h1>
+              <div className="pl-3">
+                <Spinner animation="grow" hidden={!this.state.transactionLoading}/>
+              </div>
+            </div>
           </header>
         </div>
 
@@ -67,8 +75,8 @@ class App extends Component {
           <div>
             <AccountInfo accounts={this.state.accounts} customer={this.state.customer} clearCustomer={this.clearCustomer}></AccountInfo>
 
-            <NewCustomer web3={this.state.web3} accounts={this.state.accounts} customer={this.state.customer} contract={this.state.contract} getCustomer={this.getCustomer} verifyExistingCustomer={this.verifyExistingCustomer}></NewCustomer>
-          
+            <NewCustomer web3={this.state.web3} accounts={this.state.accounts} customer={this.state.customer} contract={this.state.contract} getCustomer={this.getCustomer} newCustomer={this.newCustomer} verifyExistingCustomer={this.verifyExistingCustomer}></NewCustomer>
+
             <ProcessInfo customer={this.state.customer} isVerified={this.state.isVerified}></ProcessInfo>
           </div>
         }
@@ -82,22 +90,38 @@ class App extends Component {
     this.setState({ customer: response });
   }
 
-  async clearCustomer() {
+  async newCustomer(dataHash) {
+    this.setState({transactionLoading: true});
+    const signature = await this.state.web3.eth.personal.sign(dataHash, this.state.accounts[0]);
+
+    // Generate timestamp to be used as a nonce
+    const timestamp = Date.now();
+
+    // Add customer
     const customerAcc = this.state.accounts[0];
-    await this.state.contract.methods.clearCustomer(customerAcc).send({from: customerAcc});
+    // In reality, this request would need to come from a back end with access to a Ethereum account that is a "verifier". To avoid needing a backend for this prototype, the customer is able to add themselves to the list.
+    await this.state.contract.methods.addCustomer(customerAcc, signature, customerAcc, timestamp.toString(), "Australian Drivers License").send({ from: customerAcc });
+
+    await this.getCustomer(customerAcc);
+    this.setState({transactionLoading: false});
+}
+
+  async clearCustomer() {
+    this.setState({transactionLoading: true});
+    const customerAcc = this.state.accounts[0];
+    await this.state.contract.methods.clearCustomer(customerAcc).send({ from: customerAcc });
     this.getCustomer(customerAcc);
-    this.setState({isVerified: null})
+    this.setState({ isVerified: null, transactionLoading: false })
   }
 
   async verifyExistingCustomer(dataHash) {
     const signer = await this.state.web3.eth.personal.ecRecover(dataHash, this.state.customer.signature);
-    debugger;
     if (signer.toLowerCase() === this.state.accounts[0].toLowerCase()) {
-        this.setState({isVerified: true}, console.log("yes"));
+      this.setState({ isVerified: true });
     } else {
-        this.setState({isVerified: false}, console.log("no"));
+      this.setState({ isVerified: false });
     }
-}
+  }
 }
 
 export default App;

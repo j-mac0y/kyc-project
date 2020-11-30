@@ -12,8 +12,6 @@ class NewCustomer extends Component {
             city: '',
             isPep: false,
         }
-
-        this.clearForm = this.clearForm.bind(this);
     }
 
     render() {
@@ -96,22 +94,8 @@ class NewCustomer extends Component {
         if (this.props.customer.exists) {
             this.props.verifyExistingCustomer(dataHash);
         } else {
-            this.newCustomer(dataHash);
+            this.props.newCustomer(dataHash);
         }
-    }
-
-    async newCustomer(dataHash) {
-        const signature = await this.props.web3.eth.personal.sign(dataHash, this.props.accounts[0]);
-
-        // Generate timestamp to be used as a nonce
-        const timestamp = Date.now();
-
-        // Add customer
-        const customerAcc = this.props.accounts[0];
-        // In reality, this request would need to come from a back end with access to a Ethereum account that is a "verifier". To avoid needing a backend for this prototype, the customer is able to add themselves to the list.
-        await this.props.contract.methods.addCustomer(customerAcc, signature, customerAcc, timestamp.toString(), "Australian Drivers License").send({ from: customerAcc });
-
-        await this.props.getCustomer(customerAcc);
     }
 
     clearForm() {

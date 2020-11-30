@@ -1,0 +1,2 @@
+testnet: Rinkeby
+address: 0x9cBd2013df608b4541BE07b7F681ff00Dd2a47A9
