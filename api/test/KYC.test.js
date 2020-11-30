@@ -61,7 +61,6 @@ contract('KYC', function(accounts) {
 
         // Stop the contract and test that the functions are no longer callable
         await kyc.stopContract({from: jamesBank});
-        await catchRevert(kyc.getCustomer(alice, {from: jamesBank}));
         await catchRevert(kyc.addCustomer(bob, signature, verifiedBy, verifiedAt, documentProvided, {from: jamesBank}));
     })
 

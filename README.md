@@ -41,7 +41,13 @@ Certain assumptions have been made to simplify the prototype from a KYC perspect
 - React client
   - web3js (API for interface with Ethereum networks)
 
-## To run project locally
+## To run project locally (Rinkeby test network)
+4. Connect to Rinkeby in Metamask
+5. Run `npm install` in the **client** directory
+6. Run `npm start` in the **client** directory
+7. Browse to **localhost:3000**
+
+## To run project locally (local network)
 1. Run `ganache-cli`
 2. Run `truffle migrate` in the **api** directory
 3. Open browser and connect metamask to the ganache network (default localhost:8545)
@@ -53,3 +59,7 @@ Certain assumptions have been made to simplify the prototype from a KYC perspect
 ## To migrate to Testnet (to Rinkeby)
 1. Make a file called **.secret** in the api directory and paste your Metamask mnemonic in there.
 2. Run `truffle migrate --network rinkeby`
+
+## To run tests
+1. `ganache-cli` on port 8545
+2. `truffle test`

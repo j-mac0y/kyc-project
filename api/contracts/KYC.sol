@@ -39,7 +39,7 @@ contract KYC is Ownable {
     }
 
     function getCustomer(address customerAddr) 
-    public view isNotStopped() returns (bytes memory signature, address verifiedBy, string memory verifiedAt, string memory documentProvided, bool exists) {
+    public view returns (bytes memory signature, address verifiedBy, string memory verifiedAt, string memory documentProvided, bool exists) {
         signature = customers[customerAddr].signature;
         verifiedBy = customers[customerAddr].verifiedBy;
         verifiedAt = customers[customerAddr].verifiedAt;
