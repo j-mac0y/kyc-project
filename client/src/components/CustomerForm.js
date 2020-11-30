@@ -63,6 +63,9 @@ class NewCustomer extends Component {
                     <Button variant="primary" type="submit">
                         Submit
                     </Button>
+                    <Form.Text className="text-muted">
+                        Note: For the sake of the prototype just enter mock data like "test" and remember your values so you can verify later.
+                    </Form.Text>
 
                 </Form>
             </div>
