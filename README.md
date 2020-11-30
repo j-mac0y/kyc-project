@@ -1,7 +1,7 @@
 # Know Your Customer Prototype
 This prototype was created for the Consensys Blockchain Developer course final project.
 
-Author: James MacNaughton
+Author: j-mac0y (GitHub)
 
 ## Context - KYC
 Know Your Customer (KYC) processes are important steps that financial institutions such as banks must perform in order to comply with regulations. These regulations ensure banks and other financial institutions perform customer due diligence, or in other words, ensure that customers are who they say they are. This is primarily to avoid the bank being used in money laundering or financing of terrorism. At a basic level, a KYC process between a bank and an individual would involve the individual providing some basic information including:
