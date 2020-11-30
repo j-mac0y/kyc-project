@@ -34,7 +34,7 @@ contract('KYC', function(accounts) {
         const documentProvided = "Australian Drivers License";
         const tx = await kyc.addCustomer(alice, signature, verifiedBy, verifiedAt, documentProvided, {from: jamesBank});
         
-        assert.equal(tx.logs[0].event, "LogNewCustomer", 'should emit an event when a new Customer is added');
+        assert.equal(tx.logs[0].event, "LogAddCustomer", 'should emit an event when a new Customer is added');
     })
 
     it("should not allow the same account to verify twice", async() => {
@@ -68,5 +68,23 @@ contract('KYC', function(accounts) {
     it("should only allow an owner to stop or kill the contract", async() => {
         await catchRevert(kyc.stopContract({from: alice}));
         await catchRevert(kyc.kill({from: alice}));
+    })
+
+    it("should reset customer data completely upon clear", async() => {
+        const initialCustomer = await kyc.getCustomer(alice, {from: jamesBank});
+
+        let signature = "0x9513dde33c2c331434f13a219314605ada5ad15b618770fc789c8d32d2f502de4434cf9ae6e976025246bec6084284ddbbc097f3b73a7b1f846e30d9eddbe7a51c";
+        let verifiedBy = jamesBank;
+        let verifiedAt = "1606086072714";
+        let documentProvided = "Australian Drivers License";
+        await kyc.addCustomer(alice, signature, verifiedBy, verifiedAt, documentProvided, {from: jamesBank});
+        await kyc.clearCustomer(alice, {from: jamesBank});
+        
+        const clearedCustomer = await kyc.getCustomer(alice, {from: jamesBank});
+        assert.equal(initialCustomer.signature, clearedCustomer.signature, 'The signature of the customer does not match the cleared customer value');
+        assert.equal(initialCustomer.verifiedBy, clearedCustomer.verifiedBy, 'The verifiedBy of the customer does not match the cleared customer value');
+        assert.equal(initialCustomer.verifiedAt, clearedCustomer.verifiedAt, 'The verifiedAt of the customer does not match the cleared customer value');
+        assert.equal(initialCustomer.documentProvided, clearedCustomer.documentProvided, 'The documentProvided of the customer does not match the cleared customer value');
+        assert.equal(initialCustomer.exists, clearedCustomer.exists, 'The exists value of the customer does not match the cleared customer value');
     })
 })

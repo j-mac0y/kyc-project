@@ -17,8 +17,9 @@ contract KYC is Ownable {
         bool exists;
     }
 
-    event LogNewCustomer(address customerAddr);
+    event LogAddCustomer(address customerAddr);
     event LogContractStopped();
+    event LogClearCustomer(address customerAddr);
     
     modifier isNotCustomer(address customerAddr) {
         require(!customers[customerAddr].exists);
@@ -48,19 +49,27 @@ contract KYC is Ownable {
     }
 
     function addCustomer(address customerAddr, bytes memory signature, address verifiedBy, string memory verifiedAt, string memory documentProvided) 
-    public isNotStopped() isNotCustomer(customerAddr) returns(bool) {
-        emit LogNewCustomer(customerAddr);
+    public isNotStopped() isNotCustomer(customerAddr) {
+        emit LogAddCustomer(customerAddr);
         customers[customerAddr] = Customer({signature: signature, verifiedBy: verifiedBy, verifiedAt: verifiedAt, documentProvided: documentProvided, exists: true});
         customerCount = customerCount + 1;
-        return true;
+    }
+
+    function clearCustomer(address customerAddr)
+    public isNotStopped() {
+        emit LogClearCustomer(customerAddr);
+        customers[customerAddr].signature = "";
+        customers[customerAddr].verifiedBy = address(0);
+        customers[customerAddr].verifiedAt = "";
+        customers[customerAddr].documentProvided = "";
+        customers[customerAddr].exists = false;
     }
 
     // Implement circuit breaker design pattern
     function stopContract()
-    public onlyOwner() returns(bool) {
+    public onlyOwner() {
         emit LogContractStopped();
         stopped = true;
-        return true;
     }
 
     // Implement mortal design pattern

@@ -9,6 +9,7 @@
     "bootstrap": "^4.5.3",
     "crypto-js": "^4.0.0",
     "jsencrypt": "^3.0.0-rc.1",
+    "moment": "^2.29.1",
     "openssl-nodejs": "^1.0.5",
     "react": "^17.0.1",
     "react-bootstrap": "^1.4.0",

@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
-import getWeb3 from '../utils/getWeb3';
-import KYCContract from "../contracts/KYC";
 
 class NewCustomer extends Component {
     constructor(props) {
@@ -13,46 +11,15 @@ class NewCustomer extends Component {
             familyName: '',
             city: '',
             isPep: false,
-            web3: null,
-            accounts: null,
-            contract: null,
-            blockchainValue: null
         }
-    }
 
-    componentDidMount = async () => {
-        try {
-            // Get network provider and web3 instance.
-            const web3 = await getWeb3();
-
-            // Use web3 to get the user's accounts.
-            const accounts = await web3.eth.getAccounts();
-
-            // Get the contract instance.
-            const networkId = await web3.eth.net.getId();
-            const deployedNetwork = KYCContract.networks[networkId];
-            const kyc = new web3.eth.Contract(
-                KYCContract.abi,
-                deployedNetwork && deployedNetwork.address,
-            );
-
-            // Set web3, accounts, and contract to the state
-            this.setState({ web3, accounts, contract: kyc });
-        } catch (error) {
-            // Catch any errors for any of the above operations.
-            alert(
-                `Failed to load web3, accounts, or contract. Check console for details.`,
-            );
-            console.error(error);
-        }
+        this.clearForm = this.clearForm.bind(this);
     }
 
     render() {
-        if (!this.state.web3) {
-            return <div>Loading Web3, accounts, and contract...</div>;
-        }
         return (
             <div className="container">
+                <h1>{this.props.customer.exists ? "Verify existing customer" : "Add customer"}</h1>
                 <Form onSubmit={this.handleSubmit}>
                     <Form.Group controlId="formGivenNames">
                         <Form.Label>Given Name(s)</Form.Label>
@@ -60,6 +27,7 @@ class NewCustomer extends Component {
                             type="text"
                             placeholder="Enter given name(s)"
                             name="givenNames"
+                            value={this.state.givenNames}
                             onChange={this.handleChange} />
                     </Form.Group>
 
@@ -69,6 +37,7 @@ class NewCustomer extends Component {
                             type="text"
                             placeholder="Enter family name"
                             name="familyName"
+                            value={this.state.familyName}
                             onChange={this.handleChange} />
                     </Form.Group>
 
@@ -78,38 +47,22 @@ class NewCustomer extends Component {
                             type="text"
                             placeholder="Enter city"
                             name="city"
+                            value={this.state.city}
                             onChange={this.handleChange} />
                     </Form.Group>
 
                     <Form.Group controlId="formIsPep">
                         <Form.Check
                             type="checkbox"
-                            label="Are you a PEP?"
+                            label="Are you a Politically Exposed Person (PEP)?"
                             name="isPep"
+                            checked={this.state.isPep}
                             onChange={this.handleChange} />
                     </Form.Group>
 
                     <Button variant="primary" type="submit">
                         Submit
                     </Button>
-                    <Form.Text className="text-muted">
-                        Note: this prototype assumes that user also uploads an identification document (e.g. drivers license) for verification
-                    </Form.Text>
-
-                    {this.state.blockchainValue &&
-                        <div>
-                            <p className="pt-3">
-                                The data you provided has been verified alongside your documentation!
-                            </p>
-                            <p className="pt-3">
-                                The following data has been stored in the blockchain:
-                                {this.state.blockchainValue}
-                            </p>
-                            <p className="pt-3">
-                                The Ethereum account you used to sign your data can now be used to prove your identity to other organisations.
-                            </p>
-                        </div>
-                    }
 
                 </Form>
             </div>
@@ -120,9 +73,12 @@ class NewCustomer extends Component {
         this.setState({ [event.target.name]: event.target.type === "checkbox" ? event.target.checked : event.target.value });
     };
 
-    handleSubmit = async (event) => {
+    handleSubmit = async (event) => {        
         // Prevent HTML form submit.
         event.preventDefault();
+
+        // Clear the form of inputs
+        this.clearForm();
 
         // Generated signature from customer data and encrypted customer data
         let customerData = {
@@ -133,19 +89,35 @@ class NewCustomer extends Component {
         }
         customerData = JSON.stringify(customerData);
 
-        const dataHash = this.state.web3.utils.sha3(customerData);
-        const signature = await this.state.web3.eth.personal.sign(dataHash, this.state.accounts[0]);
+        const dataHash = this.props.web3.utils.sha3(customerData);
+        if (this.props.customer.exists) {
+            this.props.verifyExistingCustomer(dataHash);
+        } else {
+            this.newCustomer(dataHash);
+        }
+    }
+
+    async newCustomer(dataHash) {
+        const signature = await this.props.web3.eth.personal.sign(dataHash, this.props.accounts[0]);
 
         // Generate timestamp to be used as a nonce
         const timestamp = Date.now();
 
         // Add customer
-        const customerAcc = this.state.accounts[0];
+        const customerAcc = this.props.accounts[0];
         // In reality, this request would need to come from a back end with access to a Ethereum account that is a "verifier". To avoid needing a backend for this prototype, the customer is able to add themselves to the list.
-        await this.state.contract.methods.addCustomer(customerAcc, signature, customerAcc, timestamp, "Australian Drivers License").send({ from: customerAcc });
+        await this.props.contract.methods.addCustomer(customerAcc, signature, customerAcc, timestamp.toString(), "Australian Drivers License").send({ from: customerAcc });
 
-        const response = await this.state.contract.methods.getCustomer(customerAcc).call({from: customerAcc});
-        this.setState({ blockchainValue: response });
+        await this.props.getCustomer(customerAcc);
+    }
+
+    clearForm() {
+        this.setState({
+            givenNames: '',
+            familyName: '',
+            city: '',
+            isPep: false
+        });
     }
 }
 
