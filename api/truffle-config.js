@@ -19,12 +19,21 @@ const path = require("path");
  * phrase from a file you've .gitignored so it doesn't accidentally become public.
  *
  */
+var HDWalletProvider;
+var infuraURL;
 
-const HDWalletProvider = require('@truffle/hdwallet-provider');
-const infuraURL = "https://rinkeby.infura.io/v3/7b5ebf1df2744a5c9ca3fb85f89d8296";
+var fs;
+var mnemonic;
 
-const fs = require('fs');
-const mnemonic = fs.readFileSync(".secret").toString().trim();
+try {
+  HDWalletProvider = require('@truffle/hdwallet-provider');
+  infuraURL = "https://rinkeby.infura.io/v3/7b5ebf1df2744a5c9ca3fb85f89d8296";
+  
+  fs = require('fs');
+  mnemonic = fs.readFileSync(".secret").toString().trim();
+} catch (e) {
+  console.log("Could not load secrets file and/or @truffle/hdwallet-provider. If you are trying to migrate to Rinkeby network, you will need these as outlined in readme file.")
+}
 
 module.exports = {
   contracts_build_directory: path.join(__dirname, "../client/src/contracts"),
