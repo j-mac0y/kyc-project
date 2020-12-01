@@ -59,5 +59,6 @@ Certain assumptions have been made to simplify the prototype from a KYC perspect
 9. Accept the connection request to the current account in Metamask if necessary.
 
 ## To migrate to Testnet (to Rinkeby)
-1. Make a file called **.secret** in the api directory and paste your Metamask mnemonic in there.
-2. Run `truffle migrate --network rinkeby`
+1. Make a file called **.secret** in the **api** directory and paste your Metamask mnemonic in there.
+2. Make sure you have run `npm i` in the **api** directory
+3. Run `truffle migrate --network rinkeby`
